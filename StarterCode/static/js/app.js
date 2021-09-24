@@ -1,12 +1,14 @@
 var data;
 var selector = d3.select("#selDataset");
+var sampleNames;
+
 // Use the list of sample names to populate the select options  
 function init() {
 // Grab a reference to the dropdown select element  
 d3.json("samples.json").then((json_data) => {   
      data = json_data;
      console.log("init():", data);
-     var sampleNames = data.names;
+     sampleNames = data.names;
      sampleNames.forEach((sample) => {     
          selector
          .append("option")        
@@ -25,8 +27,7 @@ d3.json("samples.json").then((json_data) => {
 function optionChanged(sampleId) {
      buildDemographicInfo(sampleId);
      buildCharts(sampleId);    
-
-}
+};
 
 function buildDemographicInfo(sampleId) {
      console.log("buildDemographicInfo():", sampleId);
@@ -47,32 +48,19 @@ init();
 
 // Build the charts
 function buildCharts(sampleId) {
-     // Use sample_values as the values for the bar chart
      console.log('buildCharts():', sampleId);
-     var samples = data.samples[sampleNames].sample_values;
-     var otu_ids = data.samples[sampleNames].otu_ids;
-     var otu_labels = data.samples[sampleNames].otu_labels;
-
-
-     // Slice and reverse data for horizontal bar chart
-    var topTenOTUS = sampleSubjectOTUs.slice(0, 10).reverse();
-    var topTenFreq = sampleSubjectFreq.slice(0, 10).reverse();
-    var topTenToolTips = data.samples[0].otu_labels.slice(0, 10).reverse();
-    var topTenLabels = topTenOTUS.map((otu => "OTU " + otu));
-    var reversedLabels = topTenLabels.reverse();
-
-     // Set up first trace
-     var trace1 = {
-          x: topTenFreq,
-          y: reversedLabels,
-          text: topTenToolTips,
-          name: '',
-          type: 'bar',
-          orientation: 'h'
-     };
-
-     // Define trace1 variable
-     var barData = [trace1];
+     var sample = data.samples.filter(sample => sample.id === sampleId)[0];
+     var cut_point = sample.sample_values.length;
+     if (cut_point > 10) {
+          cut_point = 10;
+     }
+     var bar_plot = [{
+          x: sample.sample_values.slice(0, cut_point).reverse(),
+          y: sample.otu_ids.slice(0, cut_point).map(id => "otu " + id).reverse(),
+          text: sample.otu_labels.slice(0, cut_point).reverse(),
+          type: "bar", 
+          orientation: "h"
+     }];
 
      // Apply the layout
      var layout = {
@@ -85,73 +73,28 @@ function buildCharts(sampleId) {
           }
      };
 
-     // Place the plot in the div tag
-     Plotly.newPlot('bar', barData, layout);
-     
+//      // Place the plot in the div tag
+     Plotly.newPlot('bar', bar_plot, layout);
+  
+//      // Build the bubble plot
+     var bubble_plot = [{
+          y: sample.otu_ids,
+          x: sample.sample_values,
+          text:sample.otu_labels.slice(0, cut_point).reverse(),
+          mode: 'markers',
+          marker: {
+               color: sample.otu_ids,
+               opacity: [1, .8, .6, .4],
+               size: sample.sample_values,
+          }
+     }]
 
+     var layout = {
+          title: 'OTU Frequency',
+          showlegend: false,
+          height: 600,
+          width: 930
+     }
 
-
-
-}
-
-
-
-
-
-
-
-
-
-
-// function buildCharts(sampleId) {
-//      console.log('buildCharts():', sampleId)
-//      // d3.json("samples.json").then((json_data) => {   
-//           // data = json_data;
-//      let samples = data.samples;
-//      let filterArray = samples.filter(sampleObject => sampleObject.id == sample);
-//      let result = filterArray[0];
-//      let sample_values = result.sample_values;
-//      let otu_ids = result.otu_ids;
-//      let otu_labels = result.otu_labels;
-
-//      let trace1 ={
-//                   x: sample_values.slice(0,10).reverse(),
-//                   y: otu_ids.slice(0,10).map(outID => `OTU ${otuID}`).reverse(),
-//                   text: otu_labels.slice(0,10).reverse(),
-//                   name: 'Greek',
-//                   type: 'bar',
-//                   orientation: 'h'
-//               };
-//               let data = [trace1];
-//               let layout = {
-//                   title: 'Top Ten OTUs for Individual ' + sample,
-//                   margin: {1: 100, r:100, t: 100, b: 100}
-//               };
-//               Plotly.newPlot('bar', data, layout);
-// };
-//         let samples = data.samples;
-//         let filterArray = samples.filter(sampleObject => sampleObject.id == sample);
-//         let result = filterArray[0];
-//         let sample_values = result.sample_values;
-//         let otu_ids = result.otu_ids;
-//         let otu_labels = result.otu_labels;
-//     };
-// Bar Chart
-//     let trace1 ={
-//         x: sample_values.slice(0,10).reverse(),
-//         y: otu_ids.slice(0,10).map(outID => `OTU ${otuID}`).reverse(),
-//         text: otu_labels.slice(0,10).reverse(),
-//         name: 'Greek',
-//         type: 'bar',
-//         orientation: 'h'
-//     };
-//     let data = [trace1];
-//     let layout = {
-//         title: 'Top Ten OTUs for Individual ' + sample,
-//         margin: {1: 100, r:100, t: 100, b: 100}
-//     };
-//     Plotly.newPlot('bar', data, layout);
-
-//     }
-
-// }
+     Plotly.newPlot('bubble', bubble_plot, layout);
+};
