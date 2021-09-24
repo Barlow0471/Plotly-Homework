@@ -20,7 +20,6 @@ d3.json("samples.json").then((json_data) => {
          var sampleId = sampleNames[0];   
          buildDemographicInfo(sampleId);
          buildCharts(sampleId);    
-     //     buildMetadata(firstSample);
 });
 }
 
@@ -73,10 +72,10 @@ function buildCharts(sampleId) {
           }
      };
 
-//      // Place the plot in the div tag
+     // Place the plot in the div tag
      Plotly.newPlot('bar', bar_plot, layout);
   
-//      // Build the bubble plot
+     // Build the bubble plot
      var bubble_plot = [{
           y: sample.otu_ids,
           x: sample.sample_values,
